@@ -95,4 +95,7 @@ ReadPackage("semigroups", "gap/fp/freeband.gi");
 
 ReadPackage("semigroups", "gap/obsolete.gi");
 
+# CCR
+ReadPackage("semigroups", "gap/rmssearch.gi");
+
 MakeReadOnlyGlobal("SEMIGROUPS");
