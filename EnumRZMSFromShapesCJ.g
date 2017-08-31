@@ -24,84 +24,84 @@
 # Calculates the perm group which acts on these sets (via OnSets) by
 # transposition, row permutations, column permutations, row multiplication by
 # scalar and column multiplciation by scalar (scalar = non-zero group element).
-MatRowPermGrp := function(nr_rows, nr_cols, G)
-  local n, out, temp, a, i;
-
-  n := Size(G) + 1;
-  if nr_rows = 1 and nr_cols = 1 then
-    return Group(PermList([1]));
-  fi;
-
-  # If matrices are square then add a perm that transposes them
-  out := [];
-  if nr_rows = nr_cols then
-  temp := [];
-  for i in [1 .. nr_rows] do
-    for j in [1 .. nr_cols] do
-      Append(temp, List([1 .. n], k -> k + (i + (j - 1) * nr_cols - 1) * n));
-    od;
-  od;
-  Add(out, PermList(temp));
-  fi;
-
-  # If there is two or more rows then add perm which swaps first two
-  if nr_rows > 1 then
-    Add(out, PermList(
-      Concatenation([1 .. n * nr_cols] + n * nr_cols, [1 .. n * nr_cols])));
-    # If nr_row > 2 rows then add perm of order nr_rows which is the second
-    # generator of the symmetric group.
-    if nr_rows > 2 then
-      Add(out, PermList(
-        Concatenation(Concatenation(
-          List([1 .. nr_rows - 1], i -> [1 .. n * nr_cols] + i * n * nr_cols),
-          [[1 .. n * nr_rows]]))));
-    fi;
-  fi;
-
-  # If there is two or more cols then add perm which swaps first two
-  if nr_cols > 1 then
-    temp := Concatenation([1 + n .. 2 * n], [1 .. n], [1 + 2 * n .. nr_cols * n]); 
-    Add(out, PermList(
-      Concatenation(temp, temp + nr_cols * n,
-        Concatenation(
-          List([3 .. nr_rows], a -> temp + nr_cols * n * (a - 1))))));
-    # If nr_col > 2 cols then add perm of order nr_cols which is the second
-    # generator of the symmetric group.
-    if nr_cols > 2 then
-      temp := Concatenation([1 + n .. nr_cols * n], [1 .. n]);
-      Add(out, PermList(
-        Concatenation(
-          List([1 .. nr_rows], a -> temp + nr_cols * n * (a - 1)))));
-    fi;
-  fi;
-
-  # Create perms which act by row-wise multiplication (on right) and column-wise
-  # multiplication (on left)
-  gens := GeneratorsOfGroup(G);
-  elms := ShallowCopy(Elements(G));
-  rmlt := List(gens, g -> Concatenation([1],
-          1 + List(elms, e -> Position(elms, e * g))));
-  lmlt := List(gens, g -> Concatenation([1],
-          1 + List(elms, e -> Position(elms, g ^ -1 * e))));
-
-  for g in [1 .. Size(gens)] do
-    for i in [1 .. nr_rows] do
-      Add(out, PermList(Concatenation(Concatenation(
-        List([1 .. i - 1], row -> (row - 1) * nr_cols * n + [1 .. nr_cols * n]),
-        (i - 1) * nr_cols * n + [Concatenation(List([1 .. nr_cols],
-        x -> (x - 1) * n + rmlt[g]))]))));
-    od;
-    for j in [1 .. nr_cols] do
-      Add(out, PermList(Concatenation(
-        List([1 .. nr_rows], row -> (row - 1) * nr_cols * n +
-          Concatenation([1 .. (j - 1) * n], 
-          (j - 1) * n + lmlt[g],
-          [1 + j * n .. nr_cols * n])))));
-    od;
-  od;
-
-  return Group(out);
-end;
+# MatRowPermGrp := function(nr_rows, nr_cols, G)
+#   local n, out, temp, a, i;
+# 
+#   n := Size(G) + 1;
+#   if nr_rows = 1 and nr_cols = 1 then
+#     return Group(PermList([1]));
+#   fi;
+# 
+#   # If matrices are square then add a perm that transposes them
+#   out := [];
+#   if nr_rows = nr_cols then
+#   temp := [];
+#   for i in [1 .. nr_rows] do
+#     for j in [1 .. nr_cols] do
+#       Append(temp, List([1 .. n], k -> k + (i + (j - 1) * nr_cols - 1) * n));
+#     od;
+#   od;
+#   Add(out, PermList(temp));
+#   fi;
+# 
+#   # If there is two or more rows then add perm which swaps first two
+#   if nr_rows > 1 then
+#     Add(out, PermList(
+#       Concatenation([1 .. n * nr_cols] + n * nr_cols, [1 .. n * nr_cols])));
+#     # If nr_row > 2 rows then add perm of order nr_rows which is the second
+#     # generator of the symmetric group.
+#     if nr_rows > 2 then
+#       Add(out, PermList(
+#         Concatenation(Concatenation(
+#           List([1 .. nr_rows - 1], i -> [1 .. n * nr_cols] + i * n * nr_cols),
+#           [[1 .. n * nr_rows]]))));
+#     fi;
+#   fi;
+# 
+#   # If there is two or more cols then add perm which swaps first two
+#   if nr_cols > 1 then
+#     temp := Concatenation([1 + n .. 2 * n], [1 .. n], [1 + 2 * n .. nr_cols * n]); 
+#     Add(out, PermList(
+#       Concatenation(temp, temp + nr_cols * n,
+#         Concatenation(
+#           List([3 .. nr_rows], a -> temp + nr_cols * n * (a - 1))))));
+#     # If nr_col > 2 cols then add perm of order nr_cols which is the second
+#     # generator of the symmetric group.
+#     if nr_cols > 2 then
+#       temp := Concatenation([1 + n .. nr_cols * n], [1 .. n]);
+#       Add(out, PermList(
+#         Concatenation(
+#           List([1 .. nr_rows], a -> temp + nr_cols * n * (a - 1)))));
+#     fi;
+#   fi;
+# 
+#   # Create perms which act by row-wise multiplication (on right) and column-wise
+#   # multiplication (on left)
+#   gens := GeneratorsOfGroup(G);
+#   elms := ShallowCopy(Elements(G));
+#   rmlt := List(gens, g -> Concatenation([1],
+#           1 + List(elms, e -> Position(elms, e * g))));
+#   lmlt := List(gens, g -> Concatenation([1],
+#           1 + List(elms, e -> Position(elms, g ^ -1 * e))));
+# 
+#   for g in [1 .. Size(gens)] do
+#     for i in [1 .. nr_rows] do
+#       Add(out, PermList(Concatenation(Concatenation(
+#         List([1 .. i - 1], row -> (row - 1) * nr_cols * n + [1 .. nr_cols * n]),
+#         (i - 1) * nr_cols * n + [Concatenation(List([1 .. nr_cols],
+#         x -> (x - 1) * n + rmlt[g]))]))));
+#     od;
+#     for j in [1 .. nr_cols] do
+#       Add(out, PermList(Concatenation(
+#         List([1 .. nr_rows], row -> (row - 1) * nr_cols * n +
+#           Concatenation([1 .. (j - 1) * n], 
+#           (j - 1) * n + lmlt[g],
+#           [1 + j * n .. nr_cols * n])))));
+#     od;
+#   od;
+# 
+#   return Group(out);
+# end;
 
 # This permutation sends (via OnSets) a set representing an m x n matrix to its
 # transpose as a set representing a n x m matrix.
@@ -321,15 +321,5 @@ PrintMat := function(m)
   od;
   Print("\n");
 end;
-
-###############################################################################
-# Notes:
-###############################################################################
-# -Use CanonicalImage with OnSets. [[1,0],[1,1]] = {1,3,4} etc.
-# -Build row by row.
-# -Use tricks to reduce search space, such as rows need to have less 1's that above
-# row. Only do this where worthwhile!
-# -
-# -Could use CanonicalDigraph with m * n two coloured clique graph which CJ showed
 
 
