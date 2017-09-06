@@ -156,8 +156,8 @@ end;
 ###############################################################################
 
 RZMSMatrixShapesByParametersQuicker := function(m, n)
-  local bt, first, next, output, i, act, row_space, size_row_space, G, out,
-  shapes, orbs;
+  local row_space, size_row_space, bt, first, next, output, G, act, shapes,
+    orbs, out, i;
 
   if m = 1 and n = 1 then
     return Set([[0]], [[1]]);
@@ -176,7 +176,7 @@ RZMSMatrixShapesByParametersQuicker := function(m, n)
 
   bt := function(c)
     local s;
-    if Length(c) = rows then
+    if Length(c) = m then
       output(c);
       return;
     fi;
@@ -208,7 +208,7 @@ RZMSMatrixShapesByParametersQuicker := function(m, n)
     Add(shapes, c);
   end;
 
-  G := SymmetricGroup(cols);
+  G := SymmetricGroup(n);
   G := Image(ActionHomomorphism(G, row_space, Permuted));;
   act := function(x, g)
     local xg;

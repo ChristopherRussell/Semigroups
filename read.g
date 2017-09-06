@@ -97,5 +97,7 @@ ReadPackage("semigroups", "gap/obsolete.gi");
 
 # CCR
 ReadPackage("semigroups", "gap/rmssearch.gi");
+ReadPackage("semigroups", "EnumRZMSShapes.g");
+ReadPackage("semigroups", "EnumRZMS.g");
 
 MakeReadOnlyGlobal("SEMIGROUPS");
