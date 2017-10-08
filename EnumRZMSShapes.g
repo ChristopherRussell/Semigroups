@@ -89,7 +89,8 @@ BinaryMatToSet := function(mat)
 end;
 
 BooleanMatToSet := function(mat)
-  local i, j;
+  local out, i, j;
+  out := [];
   for i in [1 .. Length(mat)] do
     for j in [1 .. Length(mat[1])] do
       if mat[i][j] then
@@ -265,6 +266,7 @@ BinaryMatrixShapesByDim := function(nr_rows, nr_cols)
     data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols);
     G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
     extensions := RowExtensions(nr_rows, nr_cols);
+    Remove(extensions, nr_cols); # this omits the extension of a full row of 1's
     out := EmptyPlist(Size(extensions) * Size(data));
     for d in data do
       pos := Position(data, d);
@@ -277,10 +279,173 @@ BinaryMatrixShapesByDim := function(nr_rows, nr_cols)
         AddSet(out, CanonicalImage(G, temp, OnSets));
       od;
     od;
+    AddSet(out, [1 .. nr_rows * nr_cols]); # this is the only case we miss with
+                                           # earlier omitted extension
   fi;
 
   BinaryMatrixShapesWriteFile(nr_rows, nr_cols, out);
   return out;
+end;
+
+###############################################################################
+
+CanonicalizeBinaryMatrixSets := function(nr_rows, nr_cols, sets)
+  local G, out, s;
+  G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
+  out := [];
+  for s in sets do
+      AddSet(out, CanonicalImage(G, s, OnSets));
+  od;
+  return out;
+end;
+
+BinaryMatrixByDimTest := function(nr_rows, nr_cols, extensions)
+  local data, G, out, pos, temp, d, e;
+  data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols);
+  G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
+  out := EmptyPlist(Size(extensions) * Size(data));
+  for d in data do
+    pos := Position(data, d);
+    for e in extensions do
+      Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols, "; Data pos = ", pos,
+      "/", Size(data), "; Extensions pos = ", Position(extensions, e), "/",
+      Size(extensions), "\r");
+      temp := ShallowCopy(d);
+      UniteSet(temp, e);
+      AddSet(out, CanonicalImage(G, temp, OnSets));
+    od;
+  od;
+  return out;
+end;
+
+###############################################################################
+# Filtering extensions
+###############################################################################
+# RowArrays represent a binary matrix by a subset of
+# [1 .. nr_rows * (2 ^ nr_cols - 1)] where each integer represents a row in the
+# row space of binary rows with nr_cols columns as well as a number in [1 ..
+# nr_rows] defining how often that row occurs in the binary matrix.
+# This is appropriate since we don't care about the order of the rows in the
+# matrix - we want them to always be in a certain order!
+_RowArrayActingGroup := function(nr_rows, nr_cols, row_space)
+  local size_rs, g1, g2, g3, g4;
+
+  size_rs := 2 ^ nr_cols - 1;
+  g1 := PermList(List([1 .. 2 ^ nr_cols - 1],
+        i -> Position(row_space, Permuted(row_space[i], (1,2)))));
+  g2 := PermList(List([1 .. 2 ^ nr_cols - 1],
+        i -> Position(row_space, Permuted(row_space[i],
+                      PermList(Concatenation([2..nr_cols],[1]))))));
+  
+  g3 := PermList(List([1 .. nr_rows * size_rs],
+        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) * nr_rows -
+        nr_rows + 1 + (a - 1) mod nr_rows));
+  g4 := PermList(List([1 .. nr_rows * size_rs],
+        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) * nr_rows -
+        nr_rows + 1 + (a - 1) mod nr_rows));
+
+  return Group(g3, g4);
+end;
+
+_SetToRowArray := function(set, nr_rows, nr_cols, row_space)
+  local size_rs, out, counts, i;
+  size_rs := 2 ^ nr_cols - 1;
+  out := List(SetToBinaryMat(set, nr_rows, nr_cols), a -> Position(row_space, a));
+  counts := EmptyPlist(size_rs);
+  for i in out do
+    if IsBound(counts[i]) then
+      counts[i] := counts[i] + 1;
+    else
+      counts[i] := 1;
+    fi;
+  od;
+  out := [];
+  for i in [1 .. size_rs] do
+    if IsBound(counts[i]) then
+      Add(out, (i - 1) * nr_rows + counts[i]);
+    fi;
+  od;
+  return out;
+end;
+
+_RowArrayToSet := function(array, nr_rows, nr_cols, row_space)
+  local ret, out, count, value, row, i, k;
+    ret := List(array, a -> 1 + (a - 1) mod nr_rows);
+    out := EmptyPlist(nr_rows);
+    count := 0;
+    for i in [1 .. Size(array)] do
+      value := 1 + (array[i] - ret[i]) / (nr_rows);
+      row := row_space[value];
+      for k in [1 .. ret[i]] do
+        out[nr_rows - count] := row;
+        count := count + 1;
+      od;
+    od;
+  return BinaryMatToSet(out);
+end;
+
+# Attempt to speed up search by first filtering extensions. To do this we
+# canonicalize w.r.t rows (and assuming columns then go into dictionary order).
+# data is the data from the nr_rows - 1 x nr_cols case.
+_RowArrayByDim := function(nr_rows, nr_cols, data, row_space)
+  local G, out, count, extensions, d, e;
+  if nr_rows <> nr_cols then
+    G := _RowArrayActingGroup(nr_rows, nr_cols, row_space);
+    out := [];
+    count := 1;
+    for d in data do
+      extensions := _RowArrayExtensions(d, nr_rows - 1, nr_cols);
+      for e in extensions do
+        Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols, 
+        "; Row Arrays Data pos = ", count, "/", Size(data), "\r");
+        AddSet(out, CanonicalImage(G, e, OnSets));
+      od;
+      count := count + 1;
+    od;
+  else
+    Error("_RowArrayByDim: there should be unequal numbers of rows and columns,");
+  fi;
+  return out;
+end;
+
+# Turn m x n representations into all possible (m + 1) x n extensions by
+# non-zero rows
+_RowArrayExtensions := function(array, nr_rows, nr_cols)
+  local out, nr, rows, m, tmp, tmp2, x, i;
+  out := [];
+  nr := [];
+  rows := [];
+  for x in array do
+    m := 1 + (x - 1) mod nr_rows;
+    Add(nr, m);
+    Add(rows, (x + nr_rows - m) / nr_rows);
+  od;
+  tmp := List([1 .. Size(rows)], i -> (rows[i] - 1) * (nr_rows + 1) + nr[i]);
+  for i in [1 .. 2 ^ nr_cols - 1] do
+    if not i in rows then
+      tmp2 := ShallowCopy(tmp);
+      Add(tmp2, 1 + (i - 1) * (nr_rows + 1));
+      Add(out, tmp2);
+    fi;
+  od;
+  for i in [1 .. Size(rows)] do
+    tmp2 := ShallowCopy(tmp);
+    tmp2[i] := tmp2[i] + 1;
+    Add(out, tmp2);
+  od;
+  Perform(out, Sort);
+  return out;
+end;
+
+BinaryMatrixShapesByDimFaster := function(nr_rows, nr_cols)
+  local row_space, data, out;
+    row_space := Cartesian(List([1 .. nr_cols], a -> [0,1]));
+    Remove(row_space, 1);
+    data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols);
+    Apply(data, d -> _SetToRowArray(d, nr_rows - 1, nr_cols, row_space));
+    out := _RowArrayByDim(nr_rows, nr_cols, data, row_space);
+    Apply(out, d -> _RowArrayToSet(d, nr_rows, nr_cols, row_space));
+    return CanonicalizeBinaryMatrixSets(nr_rows, nr_cols, out);
 end;
 
 ###############################################################################
@@ -395,6 +560,7 @@ _ParallelBinaryMatrixShapesByDim := function(nr_rows, nr_cols, fork_nr, nr_forks
 end;
 
 _ParallelBinaryMatrixShapesByDimWithPrints := function(nr_rows, nr_cols, fork_nr, nr_forks)
+  local data, range, nr_data, report_gap, count, last_count, embed, G, extensions, out, temp, i, e;
 
   # If we have calculated this case before then return those results
   data := _ParallelBinaryMatrixShapesReadFile(nr_rows, nr_cols);
@@ -629,3 +795,52 @@ _Parallelfoo4 := function(n, filename)
   return really_out;
 end;
 
+
+#########
+# Testing
+#########
+
+shortcutss := function(nr_rows, nr_cols)
+  local data, embed, G, extensions, out, pos, temp, d, e;
+
+  # In square matrix case, build up from previous square case
+  if nr_rows = nr_cols then
+    data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols - 1);
+    embed := EmbedSetTransformation(nr_rows - 1, nr_cols - 1, nr_rows, nr_cols);
+    Apply(data, d -> OnSets(d, embed));
+    G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
+    extensions := SquareExtensions(nr_rows);
+    out := [];
+    for d in data do
+      pos := Position(data, d);
+      for e in extensions do
+        Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols, "; Data pos = ", pos,
+        "/", Size(data), "; Extensions pos = ", Position(extensions, e), "/",
+        Size(extensions), "\r");
+        temp := ShallowCopy(d);
+        UniteSet(temp, e);
+        AddSet(out, CanonicalImage(G, temp, OnSets));
+      od;
+    od;
+
+  # If more rows than columns then build from a square matrix by adding rows.
+  elif nr_rows > nr_cols then
+    data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols);
+    G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
+    extensions := RowExtensions(nr_rows, nr_cols);
+    out := EmptyPlist(Size(extensions) * Size(data));
+    for d in data do
+      pos := Position(data, d);
+      for e in extensions do
+        Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols, "; Data pos = ", pos,
+        "/", Size(data), "; Extensions pos = ", Position(extensions, e), "/",
+        Size(extensions), "\r");
+        temp := ShallowCopy(d);
+        UniteSet(temp, e);
+        AddSet(out, CanonicalImage(G, temp, OnSets));
+      od;
+    od;
+  fi;
+
+  return out;
+end;
