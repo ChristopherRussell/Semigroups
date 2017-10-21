@@ -118,5 +118,6 @@ ReadPackage("semigroups", "gap/fp/freeinverse.gd");
 ReadPackage("semigroups", "gap/fp/freeband.gd");
 
 ReadPackage("semigroups", "gap/obsolete.gd");
+ReadPackage("semigroups", "gap/idemsep.gd");
 
 DeclareInfoClass("InfoSemigroups");

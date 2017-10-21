@@ -1,5 +1,6 @@
 DeclareAttribute("MaximumIdempotentSeparatingCongruence", IsInverseSemigroup);
-DeclareAttribute("LatticeOfIdempotentSeparatingCongruences", IsInverseSemigroup);
+DeclareAttribute("LatticeOfIdempotentSeparatingCongruences",
+                 IsInverseSemigroup);
 DeclareAttribute("IdempotentSeparatingMonomorphismToMunnSemigroup",
                   IsInverseSemigroup);
 DeclareAttribute("FundamentalInverseSemgroupExtensionRepresentation",
@@ -8,6 +9,8 @@ DeclareAttribute("FundamentalInverseSemgroupExtensionRepresentation",
 DeclareProperty("IsFundamentalInverseSemigroup", IsSemigroup);
 DeclareProperty("IsIdempotentSeparatingCongruence", IsSemigroupCongruence);
 
+DeclareOperation("InverseSemigroupIdempotentSeparatingCongruence",
+  [IsInverseSemigroup, IsInverseSemigroup]);
 DeclareOperation("InverseSemigroupIdempotentSeparatingCongruenceByKernel",
   [IsInverseSemigroup]);
 DeclareOperation(
@@ -15,5 +18,5 @@ DeclareOperation(
   [IsInverseSemigroup]);
 
 DeclareOperation("InverseSemigroupOrderIdeal", [IsInverseSemigroup, IsList]);
-DeclareOperation("InverseSemigroupOrderIdeal", 
+DeclareOperation("InverseSemigroupOrderIdeal",
                   [IsInverseSemigroup, IsMultiplicativeElementWithInverse]);
