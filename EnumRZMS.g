@@ -310,7 +310,7 @@ end;
 ###############################################################################
 # Given a trivial case (nr_rows = 1 or nr_cols = 1 or Size(G) = 1) this returns
 # the (anti-)isomorphism classes of RZMS with the given dimensions. The method
-# RZMSMatricesByShape is very ineffective for these cases.
+# RZMSMatricesByShape would be very ineffective for these cases.
 RZMSMatricesByShapeEasyCase := function(nr_rows, nr_cols, G, shape)
   local out, dim, point, i;
 
