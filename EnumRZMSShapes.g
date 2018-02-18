@@ -1,5 +1,5 @@
 # This code requires the images package
-LoadPackage("images");;
+LoadPackage("images");
 
 ###############################################################################
 # Permutations and operations on sets represenating (regular) binary matrices
@@ -207,7 +207,7 @@ BinaryMatrixShapesReadFile := function(nr_rows, nr_cols)
 end;
 
 BinaryMatrixShapesWriteFile := function(nr_rows, nr_cols, data)
-  local prefix, name, file, d;
+  local prefix, name, file;
   prefix := "/Users/crussell/Desktop/shapes/shapes-";
   name := Concatenation(prefix, String(nr_rows), "x", String(nr_cols));
   file := IO_File(name, "w");
@@ -332,17 +332,17 @@ _RowArrayActingGroup := function(nr_rows, nr_cols, row_space)
 
   size_rs := 2 ^ nr_cols - 1;
   g1 := PermList(List([1 .. 2 ^ nr_cols - 1],
-        i -> Position(row_space, Permuted(row_space[i], (1,2)))));
+        i -> Position(row_space, Permuted(row_space[i], (1, 2)))));
   g2 := PermList(List([1 .. 2 ^ nr_cols - 1],
         i -> Position(row_space, Permuted(row_space[i],
-                      PermList(Concatenation([2..nr_cols],[1]))))));
-  
+                      PermList(Concatenation([2 .. nr_cols], [1]))))));
+
   g3 := PermList(List([1 .. nr_rows * size_rs],
-        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) * nr_rows -
-        nr_rows + 1 + (a - 1) mod nr_rows));
+        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) *
+             nr_rows - nr_rows + 1 + (a - 1) mod nr_rows));
   g4 := PermList(List([1 .. nr_rows * size_rs],
-        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) * nr_rows -
-        nr_rows + 1 + (a - 1) mod nr_rows));
+        a -> (((a + nr_rows - (1 + (a - 1) mod nr_rows)) / nr_rows) ^ g1) *
+             nr_rows - nr_rows + 1 + (a - 1) mod nr_rows));
 
   return Group(g3, g4);
 end;
@@ -350,7 +350,8 @@ end;
 _SetToRowArray := function(set, nr_rows, nr_cols, row_space)
   local size_rs, out, counts, i;
   size_rs := 2 ^ nr_cols - 1;
-  out := List(SetToBinaryMat(set, nr_rows, nr_cols), a -> Position(row_space, a));
+  out := List(SetToBinaryMat(set, nr_rows, nr_cols),
+              a -> Position(row_space, a));
   counts := EmptyPlist(size_rs);
   for i in out do
     if IsBound(counts[i]) then
@@ -396,14 +397,15 @@ _RowArrayByDim := function(nr_rows, nr_cols, data, row_space)
     for d in data do
       extensions := _RowArrayExtensions(d, nr_rows - 1, nr_cols);
       for e in extensions do
-        Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols, 
+        Print("\c Rows = ", nr_rows, "; Cols = ", nr_cols,
         "; Row Arrays Data pos = ", count, "/", Size(data), "\r");
         AddSet(out, CanonicalImage(G, e, OnSets));
       od;
       count := count + 1;
     od;
   else
-    Error("_RowArrayByDim: there should be unequal numbers of rows and columns,");
+    Error("_RowArrayByDim: there should be unequal numbers of rows and ",
+          "columns,");
   fi;
   return out;
 end;
@@ -439,7 +441,7 @@ end;
 
 BinaryMatrixShapesByDimFaster := function(nr_rows, nr_cols)
   local row_space, data, out;
-    row_space := Cartesian(List([1 .. nr_cols], a -> [0,1]));
+    row_space := Cartesian(List([1 .. nr_cols], a -> [0, 1]));
     Remove(row_space, 1);
     data := BinaryMatrixShapesByDim(nr_rows - 1, nr_cols);
     Apply(data, d -> _SetToRowArray(d, nr_rows - 1, nr_cols, row_space));
@@ -488,8 +490,9 @@ _ParallelBinaryMatrixShapesReadFile := function(nr_rows, nr_cols)
   return out;
 end;
 
-_ParallelBinaryMatrixShapesWriteFile := function(nr_rows, nr_cols, data, fork_nr)
-  local prefix, name, file, d;
+_ParallelBinaryMatrixShapesWriteFile := function(nr_rows, nr_cols, data,
+  local prefix, name, file;
+                                                 fork_nr)
   prefix := "/circa/home/cr66/shapes/shapes-";
   name := Concatenation(prefix, String(nr_rows), "x", String(nr_cols), "-fork",
           String(fork_nr));
@@ -499,7 +502,8 @@ _ParallelBinaryMatrixShapesWriteFile := function(nr_rows, nr_cols, data, fork_nr
 end;
 
 # This doesn't work for nr_rows <> nr_cols!!!!!!!!
-_ParallelBinaryMatrixShapesByDim := function(nr_rows, nr_cols, fork_nr, nr_forks)
+_ParallelBinaryMatrixShapesByDim := function(nr_rows, nr_cols, fork_nr,
+                                             nr_forks)
   local data, range, embed, G, extensions, out, temp, i, e;
 
   # If we have calculated this case before then return those results
@@ -541,7 +545,6 @@ _ParallelBinaryMatrixShapesByDim := function(nr_rows, nr_cols, fork_nr, nr_forks
       range := [1 + range * (fork_nr - 1) .. range * fork_nr];
     fi;
 
-
     G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
     extensions := RowExtensions(nr_rows, nr_cols);
     out := EmptyPlist(Size(extensions) * Size(data));
@@ -559,8 +562,10 @@ _ParallelBinaryMatrixShapesByDim := function(nr_rows, nr_cols, fork_nr, nr_forks
   _ParallelBinaryMatrixShapesWriteFile(nr_rows, nr_cols, out, fork_nr);
 end;
 
-_ParallelBinaryMatrixShapesByDimWithPrints := function(nr_rows, nr_cols, fork_nr, nr_forks)
-  local data, range, nr_data, report_gap, count, last_count, embed, G, extensions, out, temp, i, e;
+_ParallelBinaryMatrixShapesByDimWithPrints := function(nr_rows, nr_cols,
+                                                       fork_nr, nr_forks)
+  local data, range, nr_data, report_gap, count, last_count, embed, G,
+  extensions, out, temp, i, e;
 
   # If we have calculated this case before then return those results
   data := _ParallelBinaryMatrixShapesReadFile(nr_rows, nr_cols);
@@ -627,7 +632,6 @@ _ParallelBinaryMatrixShapesByDimWithPrints := function(nr_rows, nr_cols, fork_nr
     count := 1;
     last_count := 1;
 
-
     G := ActingBinaryMatrixGroup(nr_rows, nr_cols);
     extensions := RowExtensions(nr_rows, nr_cols);
     out := EmptyPlist(Size(extensions) * Size(data));
@@ -658,7 +662,7 @@ end;
 # Collates files call Concatenation(prefix, "f", String(n)) where n in [1 ..
 # nr_forks]
 _ParallelOutputCollation := function(prefix, nr_forks)
-  local out, name, file, tmp, file_out, i, d;
+  local out, name, file, tmp, file_out, i;
 
   out := [];
   for i in [1 .. nr_forks] do
@@ -678,15 +682,16 @@ _ParallelOutputCollation := function(prefix, nr_forks)
   IO_Close(file_out);
 end;
 
-
 _Parallelfoo4 := function(n, filename)
-  local _AsBipartiteDigraph, _AsBooleanMat, out, maps, digraphs, groups, lookup, reps, last_print, G, j, pos, size, really_out, gr1, zeros, nbs, bp, p, gr2, sort, i, k, rep, v;
+  local _AsBipartiteDigraph, _AsBooleanMat, out, maps, digraphs, groups, lookup,
+  reps, last_print, G, j, pos, size, really_out, gr1, zeros, nbs, bp, p, gr2,
+  sort, i, k, rep, v;
 
   # Convert a digraph to a bipartite digraph via the adjacency matrix with all
   # edges pointing in the same direction (so that we may act on the rows and
   # columns independently)
   _AsBipartiteDigraph := function(nbs)
-    return DigraphNC(Concatenation(List(nbs, x -> x + n), 
+    return DigraphNC(Concatenation(List(nbs, x -> x + n),
                                    List([1 .. n], x -> [])));
   end;
 
@@ -714,15 +719,15 @@ _Parallelfoo4 := function(n, filename)
   out := [];
   maps := [];
   Print("Reading digraphs from file . . .\n");
-  digraphs := ReadDigraphs(filename, TCodeDecoderNC);;
+  digraphs := ReadDigraphs(filename, TCodeDecoderNC);
   groups := [];
   lookup := [];
   reps   := [];
   last_print := 0;
 
   Print("Finding automorphism groups of digraphs . . .\n");
-  for i in [1 .. Length(digraphs)] do 
-    if i = last_print + 1000 then 
+  for i in [1 .. Length(digraphs)] do
+    if i = last_print + 1000 then
       Print("At ", i, " of ", Length(digraphs), ", found ");
       Print(Length(groups), " automorphism groups, so far\n");
       last_print := i;
@@ -730,12 +735,12 @@ _Parallelfoo4 := function(n, filename)
     G := AutomorphismGroup(digraphs[i]);
     j := Position(groups, G);
 
-    if j = fail then 
+    if j = fail then
       Add(groups, G);
       pos       := Length(groups);
       lookup[i] := pos;
       reps[pos] := [];
-      for k in [1 .. n] do 
+      for k in [1 .. n] do
         Add(reps[pos], List(Orbits(G, Combinations([1 .. n], k), OnSets),
                             Representative));
       od;
@@ -749,8 +754,8 @@ _Parallelfoo4 := function(n, filename)
   really_out := [];
   Print("Finding representatives . . .\n");
   last_print := 0;
-  for i in [1 .. Length(digraphs)] do 
-    if i = last_print + 999 then 
+  for i in [1 .. Length(digraphs)] do
+    if i = last_print + 999 then
       Print("At ", i, " of ", Length(digraphs));
       Print(", found ", Length(really_out), " representatives, so far\n");
       last_print := i;
@@ -759,10 +764,10 @@ _Parallelfoo4 := function(n, filename)
     gr1 := digraphs[i];
     zeros := Filtered([1 .. n], v -> OutDegrees(gr1)[v] = 0
                                      or InDegrees(gr1)[v] = 0);
-    
-    for j in [Maximum(Size(zeros), 1) .. n] do 
+
+    for j in [Maximum(Size(zeros), 1) .. n] do
       for rep in reps[pos][j] do
-        if IsSubsetSet(rep, zeros) then 
+        if IsSubsetSet(rep, zeros) then
           # No rows or columns of zeros in adjacency matrix of gr with a loop
           # added to every vertex in rep.
           nbs := OutNeighboursMutableCopy(gr1);
@@ -794,7 +799,6 @@ _Parallelfoo4 := function(n, filename)
   od;
   return really_out;
 end;
-
 
 #########
 # Testing

@@ -11,7 +11,7 @@
 ###############################################################################
 
 # This code requires the images package
-LoadPackage("images");;
+LoadPackage("images");
 
 ###############################################################################
 # These two functions just map between 3D and 1D represenations of 0-group
@@ -106,7 +106,7 @@ ZeroGroupMatrixToSet := function(mat, nr_rows, nr_cols, G)
       if mat[i][j] = 0 then
         Add(set, Flatten3DPoint(dim, [i, j, 1]));
       else
-        Add(set, 
+        Add(set,
           Flatten3DPoint(dim, [i, j, Position(Elements(G), mat[i][j])]));
       fi;
     od;
@@ -155,7 +155,8 @@ end;
 #
 # (That is to say, the elements of G_0 correspond to [1 .. Size(G_0)] and perm
 # sends a -> a * b for all a in G_0 and some b in G_0.)
-ApplyPermSingleAssignDimension := function(dimensions, dim, perm, fixdim, fixval)
+ApplyPermSingleAssignDimension  := function(dimensions, dim, perm, fixdim,
+                                            fixval)
   local map, point, i;
   map := [];
   for i in [1 .. Product(dimensions)] do
@@ -394,7 +395,7 @@ RZMS := function(order)
       H := Image(IsomorphismPermGroup(G));
       mats := RZMSMatricesByParameters(p[1], p[2], H);
       Apply(mats, mat -> SetToZeroGroupMatrix(mat, p[1], p[2], H));
-      Apply(mats, mat -> ReesZeroMatrixSemigroup(H, mat));      
+      Apply(mats, mat -> ReesZeroMatrixSemigroup(H, mat));
       Add(out, mats);
     od;
   od;
@@ -404,7 +405,7 @@ end;
 # just for interest (have better method elsewhere)
 # returns just the rees matrix semigroups. They correspond to the RZMS which
 # have no zeros in the defining matrix and are obtained by removing the zero
-# element from these. 
+# element from these.
 RMSMatrices := function(order)
   local out, parameters, H, shape, mats, p, G;
   out := [];
@@ -428,18 +429,18 @@ end;
 ###############################################################################
 # May be useful
 ###############################################################################
-HasFullCol := function (rows, cols, mat)
+HasFullCol := function(rows, cols, mat)
   local i;
   for i  in [1 .. cols]  do
-    if Size(Intersection(List([1 .. rows], a -> (a - 1) * cols + i), mat))
-      = rows then
+    if Size(Intersection(List([1 .. rows],
+                              a -> (a - 1) * cols + i), mat)) = rows then
       return true;
     fi;
   od;
   return false;
 end;
 
-HasFullRow := function (rows, cols, mat)
+HasFullRow := function(rows, cols, mat)
   local i;
   for i  in [1 .. rows]  do
     if Size(Intersection([(i - 1) * cols + 1 .. i * cols], mat)) = cols then
@@ -449,18 +450,18 @@ HasFullRow := function (rows, cols, mat)
   return false;
 end;
 
-FindFullCol := function (rows, cols, mat)
+FindFullCol := function(rows, cols, mat)
   local j;
   for j  in [1 .. cols]  do
-    if Size(Intersection(List([1 .. rows], a -> (a - 1) * cols + j), mat))
-      = rows then
+    if Size(Intersection(List([1 .. rows],
+                         a -> (a - 1) * cols + j), mat)) = rows then
       return j;
     fi;
   od;
   return fail;
 end;
 
-FindFullRow := function (rows, cols, mat)
+FindFullRow := function(rows, cols, mat)
   local i;
   for i in [1 .. rows]  do
     if Size(Intersection([(i - 1) * cols + 1 .. i * cols], mat)) = cols then
