@@ -207,13 +207,13 @@ RZMSMatrixIsomorphismGroup := function(shape, nr_rows, nr_cols, G)
   gens := GeneratorsOfGroup(G);
   elms := ShallowCopy(Elements(G));
 
-  # Apply g to each row (right mult):
+  # Apply g to each row (right multiplication):
   rmlt := List(gens, g -> PermList(Concatenation([1],
           1 + List(elms, e -> Position(elms, e * g)))));
   grswaps := List([1 .. dim[1]], r -> List(rmlt, g ->
   ApplyPermSingleAssignDimension(dim, 3, g, 1, r)));
 
-  # Apply g to each col (left mult by inverse):
+  # Apply g to each col (left multiplication by inverse):
   lmlt := List(gens, g -> PermList(Concatenation([1],
           1 + List(elms, e -> Position(elms, g ^ -1 * e)))));
   gcswaps := List([1 .. dim[2]], r -> List(lmlt, g ->
@@ -360,7 +360,7 @@ RZMSMatricesByParameters := function(nr_rows, nr_cols, G)
   fi;
 
   # Get shapes
-  shapes := BinaryMatrixShapesByDim(nr_rows, nr_cols);
+  shapes := BinaryMatrixShapesByDim(nr_rows, nr_cols, true);
 
   # Find by shape
   out := [];
@@ -433,49 +433,4 @@ RMSMatrices := function(order)
     od;
   od;
   return out;
-end;
-
-###############################################################################
-# May be useful
-###############################################################################
-HasFullCol := function(rows, cols, mat)
-  local i;
-  for i  in [1 .. cols]  do
-    if Size(Intersection(List([1 .. rows],
-                              a -> (a - 1) * cols + i), mat)) = rows then
-      return true;
-    fi;
-  od;
-  return false;
-end;
-
-HasFullRow := function(rows, cols, mat)
-  local i;
-  for i  in [1 .. rows]  do
-    if Size(Intersection([(i - 1) * cols + 1 .. i * cols], mat)) = cols then
-      return true;
-    fi;
-  od;
-  return false;
-end;
-
-FindFullCol := function(rows, cols, mat)
-  local j;
-  for j  in [1 .. cols]  do
-    if Size(Intersection(List([1 .. rows],
-                         a -> (a - 1) * cols + j), mat)) = rows then
-      return j;
-    fi;
-  od;
-  return fail;
-end;
-
-FindFullRow := function(rows, cols, mat)
-  local i;
-  for i in [1 .. rows]  do
-    if Size(Intersection([(i - 1) * cols + 1 .. i * cols], mat)) = cols then
-      return i;
-    fi;
-  od;
-  return fail;
 end;

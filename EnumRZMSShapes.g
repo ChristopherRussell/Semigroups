@@ -221,13 +221,28 @@ end;
 # This finds shapes by building up from lower dimension cases.
 ###############################################################################
 ###############################################################################
-BinaryMatrixShapesByDim := function(nr_rows, nr_cols)
-  local data, out, trans, embed, G, extensions, pos, temp, d, e;
+BinaryMatrixShapesByDim := function(arg)
+  local nr_rows, nr_cols, RW, data, out, trans, embed, G, extensions, pos, temp,
+  d, e;
+
+  if Length(arg) = 2 then
+    nr_rows := arg[1];
+    nr_cols := arg[2];
+    RW := false;
+  elif Length(arg) = 3 then
+    nr_rows := arg[1];
+    nr_cols := arg[2];
+    RW := arg[3];
+  else
+    Error("BinaryMatrixShapesByDim: invalid arguments");
+  fi;
 
   # If we have calculated this case before then return those results
-  data := BinaryMatrixShapesReadFile(nr_rows, nr_cols);
-  if data <> fail then
-    return data;
+  if RW then
+    data := BinaryMatrixShapesReadFile(nr_rows, nr_cols);
+    if data <> fail then
+      return data;
+    fi;
   fi;
 
   # These are cases which we can describe the solution to explicitly
@@ -283,7 +298,9 @@ BinaryMatrixShapesByDim := function(nr_rows, nr_cols)
                                            # earlier omitted extension
   fi;
 
-  BinaryMatrixShapesWriteFile(nr_rows, nr_cols, out);
+  if RW then
+    BinaryMatrixShapesWriteFile(nr_rows, nr_cols, out);
+  fi;
   return out;
 end;
 
@@ -345,6 +362,35 @@ _RowArrayActingGroup := function(nr_rows, nr_cols, row_space)
              nr_rows - nr_rows + 1 + (a - 1) mod nr_rows));
 
   return Group(g3, g4);
+end;
+
+# Turn m x n representations into all possible (m + 1) x n extensions by
+# non-zero rows
+_RowArrayExtensions := function(array, nr_rows, nr_cols)
+  local out, nr, rows, m, tmp, tmp2, x, i;
+  out := [];
+  nr := [];
+  rows := [];
+  for x in array do
+    m := 1 + (x - 1) mod nr_rows;
+    Add(nr, m);
+    Add(rows, (x + nr_rows - m) / nr_rows);
+  od;
+  tmp := List([1 .. Size(rows)], i -> (rows[i] - 1) * (nr_rows + 1) + nr[i]);
+  for i in [1 .. 2 ^ nr_cols - 1] do
+    if not i in rows then
+      tmp2 := ShallowCopy(tmp);
+      Add(tmp2, 1 + (i - 1) * (nr_rows + 1));
+      Add(out, tmp2);
+    fi;
+  od;
+  for i in [1 .. Size(rows)] do
+    tmp2 := ShallowCopy(tmp);
+    tmp2[i] := tmp2[i] + 1;
+    Add(out, tmp2);
+  od;
+  Perform(out, Sort);
+  return out;
 end;
 
 _SetToRowArray := function(set, nr_rows, nr_cols, row_space)
@@ -410,35 +456,6 @@ _RowArrayByDim := function(nr_rows, nr_cols, data, row_space)
   return out;
 end;
 
-# Turn m x n representations into all possible (m + 1) x n extensions by
-# non-zero rows
-_RowArrayExtensions := function(array, nr_rows, nr_cols)
-  local out, nr, rows, m, tmp, tmp2, x, i;
-  out := [];
-  nr := [];
-  rows := [];
-  for x in array do
-    m := 1 + (x - 1) mod nr_rows;
-    Add(nr, m);
-    Add(rows, (x + nr_rows - m) / nr_rows);
-  od;
-  tmp := List([1 .. Size(rows)], i -> (rows[i] - 1) * (nr_rows + 1) + nr[i]);
-  for i in [1 .. 2 ^ nr_cols - 1] do
-    if not i in rows then
-      tmp2 := ShallowCopy(tmp);
-      Add(tmp2, 1 + (i - 1) * (nr_rows + 1));
-      Add(out, tmp2);
-    fi;
-  od;
-  for i in [1 .. Size(rows)] do
-    tmp2 := ShallowCopy(tmp);
-    tmp2[i] := tmp2[i] + 1;
-    Add(out, tmp2);
-  od;
-  Perform(out, Sort);
-  return out;
-end;
-
 BinaryMatrixShapesByDimFaster := function(nr_rows, nr_cols)
   local row_space, data, out;
     row_space := Cartesian(List([1 .. nr_cols], a -> [0, 1]));
@@ -470,8 +487,7 @@ end;
 # -Build row by row.
 # -Use tricks to reduce search space, such as rows need to have less 1's than
 # above row. Only do this where worthwhile!
-# -
-# -Could use CanonicalDigraph with m * n two coloured clique graph
+# -Could use BlissCanonicalDigraph with m * n two coloured clique graph
 
 ###############################################################################
 # Lovelace implementation:
@@ -491,8 +507,8 @@ _ParallelBinaryMatrixShapesReadFile := function(nr_rows, nr_cols)
 end;
 
 _ParallelBinaryMatrixShapesWriteFile := function(nr_rows, nr_cols, data,
-  local prefix, name, file;
                                                  fork_nr)
+  local prefix, name, file;
   prefix := "/circa/home/cr66/shapes/shapes-";
   name := Concatenation(prefix, String(nr_rows), "x", String(nr_cols), "-fork",
           String(fork_nr));
@@ -663,7 +679,6 @@ end;
 # nr_forks]
 _ParallelOutputCollation := function(prefix, nr_forks)
   local out, name, file, tmp, file_out, i;
-
   out := [];
   for i in [1 .. nr_forks] do
     name := Concatenation(prefix, String(i));
@@ -775,20 +790,20 @@ _Parallelfoo4 := function(n, filename)
             AddSet(nbs[v], v);
           od;
           bp := _AsBipartiteDigraph(nbs);
-          p := DigraphCanonicalLabelling(bp);
+          p := BlissCanonicalLabelling(bp);
           gr2 := OnDigraphs(bp, p);
 
           sort := PositionSorted(out, gr2);
           if sort > size then
             Add(out, gr2);
-            if CanonicalDigraph(DigraphReverse(gr2)) >= gr2 then
+            if BlissCanonicalDigraph(DigraphReverse(gr2)) >= gr2 then
               Add(really_out, _AsBooleanMat([gr2, p]));
             fi;
             size := size + 1;
           elif gr2 <> out[sort] then
             CopyListEntries(out, sort, 1, out, sort + 1, 1, size);
             out[sort] := gr2;
-            if CanonicalDigraph(DigraphReverse(gr2)) >= gr2 then
+            if BlissCanonicalDigraph(DigraphReverse(gr2)) >= gr2 then
               Add(really_out, _AsBooleanMat([gr2, p]));
             fi;
             size := size + 1;
