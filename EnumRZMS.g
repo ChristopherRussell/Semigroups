@@ -313,11 +313,14 @@ end;
 # the (anti-)isomorphism classes of RZMS with the given dimensions. The method
 # RZMSMatricesByShape would be very ineffective for these cases.
 RZMSMatricesByShapeEasyCase := function(nr_rows, nr_cols, G, shape)
-  local out, dim, point, i;
+  local out, dim, pos, point, i;
 
   out := [];
   dim := [nr_rows, nr_cols, Size(G) + 1];
-  if dim[1] = 1 or dim[2] = 1 or dim[3] = 2 then
+  if dim[1] = 1 or dim[2] = 1 then
+    pos := Position(Elements(G), One(G)) + 1;
+    return [List([1 .. nr_rows], i -> pos + (i - 1) * (Size(G) + 1))];
+  elif dim[3] = 2 then
     for i in [1 .. dim[1] * dim[2]] do
       point := Unflatten2DPointIn3D(dim, i);
       if i in shape then
@@ -326,9 +329,10 @@ RZMSMatricesByShapeEasyCase := function(nr_rows, nr_cols, G, shape)
         Add(out, Flatten3DPoint(dim, [point[1], point[2], 1]));
       fi;
     od;
+    return [out];
   fi;
-
-  return [out];
+  ErrorNoReturn("RZMSMatricesByShapeEasyCase: only for cases with 1 row, 1 ",
+                "column or trivial group");
 end;
 
 ###############################################################################
@@ -337,7 +341,12 @@ end;
 # {0}. When nr_rows is not equal to nr_cols a representative of each
 # anti-isomorphism class is returned instead
 RZMSMatricesByParameters := function(nr_rows, nr_cols, G)
-  local out, i, shapes, shape;
+  local pos, out, i, shapes, shape;
+
+  if nr_cols = 1 then
+    pos := Position(Elements(G), One(G)) + 1;
+    return [List([1 .. nr_rows], i -> pos + (i - 1) * (Size(G) + 1))];
+  fi;
 
   # The m x n case is deduced from the n x m case.
   if nr_rows < nr_cols then
@@ -356,7 +365,7 @@ RZMSMatricesByParameters := function(nr_rows, nr_cols, G)
   # Find by shape
   out := [];
   for shape in shapes do
-    if nr_rows = 1 or nr_cols = 1 or Size(G) = 1 then
+    if Size(G) = 1 then
       Append(out, RZMSMatricesByShapeEasyCase(nr_rows, nr_cols, G, shape));
     else
       Append(out, RZMSMatricesByShape(nr_rows, nr_cols, G, shape));
