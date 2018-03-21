@@ -945,10 +945,10 @@ function(S)
   local T, G, act;
   T := MTSEParent(Representative(S));
   G := McAlisterTripleSemigroupGroup(T);
-  act := McAlisterTripleSemigroupAction(T);
+  act := MTSUnderlyingAction(T); # MTSAction is not an action, causes problems.
   return {x, y} -> RepresentativeAction(G,
-                                        LambdaFunc(S)(y),
                                         LambdaFunc(S)(x),
+                                        LambdaFunc(S)(y),
                                         act);
 end);
 

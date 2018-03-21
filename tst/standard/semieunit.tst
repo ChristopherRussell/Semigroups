@@ -132,7 +132,7 @@ gap> attr := [MTSSemilattice, MTSGroup, MTSPartialOrder, MTSAction,
 gap> M := Range(Mps);;
 gap> ForAll(attr, A -> A(S) = A(M));
 true
-gap> Print(S, "\n"));
+gap> Print(S, "\n");
 Semigroup([ MTSE(McAlisterTripleSemigroup(Group( [ (1,2) ] ), Digraph( [ [ 1, \
 3 ], [ 2, 3 ], [ 3 ], [ 2, 3, 4 ], [ 1, 3, 5 ] ] ), [ 3, 2, 4, 1 ]), 1, ()), M\
 TSE(McAlisterTripleSemigroup(Group( [ (1,2) ] ), Digraph( [ [ 1, 3 ], [ 2, 3 ]\
