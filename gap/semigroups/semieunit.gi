@@ -544,71 +544,73 @@ end);
 #InstallMethod(SmallGeneratingSet, "for a McAlister triple semigroup",
 #[IsMcAlisterTripleSemigroup],
 #  function
-SEMIGROUPS.MTSSmallGen := function(S)
-   local G, Sl, X_Y, Y_X, comps, lookup, RepAct, _Stab, _Orb, hom, act, gens,
-   acts, po, top, sl, above, c, stab, check, orbs, stabs, found, Gcj, j, nbrs, r,
-   i, cat, pos, combined, new_orbs, n, sizes, Gc1, alpha, gs, g, u, nbr, v, o,
-   orb;
 
-   G := McAlisterTripleSemigroupGroup(S);
-   Sl := McAlisterTripleSemigroupSemilattice(S);
-   X_Y := DigraphVertexLabels(Sl);
-   Y_X := McAlisterTripleSemigroupSemilatticeVertexLabelInverseMap(S);
-   comps := McAlisterTripleSemigroupComponents(S).comps;
+SEMIGROUPS.MTSSmallGen := function(S)
+  local G, Sl, X_Y, Y_X, comps, lookup, RepAct, _Stab, _Orb, hom, act, gens,
+  acts, po, top, sl, above, c, stab, check, orbs, stabs, found, Gcj, j, nbrs, r,
+  i, cat, pos, combined, new_orbs, g, n, sizes, Gc1, alpha, gs, u, nbr, v, o,
+  orb;
+
+   G      := McAlisterTripleSemigroupGroup(S);
+   Sl     := McAlisterTripleSemigroupSemilattice(S);
+   X_Y    := DigraphVertexLabels(Sl);
+   Y_X    := McAlisterTripleSemigroupSemilatticeVertexLabelInverseMap(S);
+   comps  := McAlisterTripleSemigroupComponents(S).comps;
    lookup := McAlisterTripleSemigroupComponents(S).id;
 
    if McAlisterTripleSemigroupUnderlyingAction(S) = OnPoints then
      RepAct := {a, b} -> RepresentativeAction(G, b, a);
-     _Stab := {a} -> Stabilizer(G, a);
-     _Orb := {H, a} -> Orbit(H, a);
+     _Stab  := {a} -> Stabilizer(G, a);
+     _Orb   := {H, a} -> Orbit(H, a);
    else
      hom := McAlisterTripleSemigroupActionHomomorphism(S);
      # Can't use McAlisterTripleSemigroupAction because it is an anti-action
      # but not an action and produces unexpected results with some of these
      # methods.
-     act := McAlisterTripleSemigroupUnderlyingAction(S);
+     act    := McAlisterTripleSemigroupUnderlyingAction(S);
      RepAct := {a, b} -> RepresentativeAction(G, b, a, act);
-     gens := Generators(G);
-     acts := List(gens, g -> g ^ hom);
-     _Stab := {a} -> Stabilizer(G, a, act);
-     _Orb := {H, a} -> Orbit(H, a, act);
+     gens   := Generators(G);
+     acts   := List(gens, g -> g ^ hom);
+     _Stab  := {a} -> Stabilizer(G, a, act);
+     _Orb   := {H, a} -> Orbit(H, a, act);
    fi;
 
    # We use reflexive transitive reductions so we can only check neighbours
    # u > v such that there is no w where u > w > v.
    gens := [];
-   po := MTSQuotientDigraph(S); # vertex i corresponds to comps[i]
-   po := DigraphReflexiveTransitiveReduction(po);
-   top := Reversed(DigraphTopologicalSort(po)); # Work down from top D-classes.
-   sl := DigraphReflexiveTransitiveReduction(Sl);
-   SetDigraphVertexLabels(sl, DigraphVertexLabels(Sl)); # Preserve labelling.
+   po   := MTSQuotientDigraph(S);  # Vertex i corresponds to comps[i].
+   po   := DigraphReflexiveTransitiveReduction(po);
+   top  := Reversed(DigraphTopologicalSort(po));  # Order D-classes top first.
+   sl   := DigraphReflexiveTransitiveReduction(Sl);
+   SetDigraphVertexLabels(sl, DigraphVertexLabels(Sl));  # Preserve labelling.
    for i in [1 .. Length(top)] do
      above := Filtered(top{[1 .. i - 1]}, j -> Y_X[j] in InNeighboursOfVertex(po,
               top[i]));
      c := comps[top[i]];
 
-     if IsEmpty(above) then # Add generating set for this D-class.
+     if IsEmpty(above) then  # Add generating set for this D-class.
        stab := GeneratorsOfGroup(_Stab(c[1]));
        for g in stab do
-         Add(gens, MTSE(S, c[1], g)); # Add gens of maximal subgroup of R-class.
+         Add(gens, MTSE(S, c[1], g));  # Add gens of maximal subgroup of R-class.
        od;
-       if Length(c) > 1 then # Add reps from H-classes of R-class.
+       if Length(c) > 1 then  # Add reps from H-classes of R-class.
          for j in [1 .. Length(c) - 1] do
            Add(gens, MTSE(S, c[j], RepAct(c[j + 1], c[j])));
          od;
-       elif IsEmpty(stab) then # If D-class is just a single element then add it.
+       elif IsEmpty(stab) then  # If D-class is just a single element, add it.
          Add(gens, MTSE(S, c[1], One(G)));
        fi;
        Add(gens, MTSE(S, c[Length(c)], RepAct(c[1], c[Length(c)])));
 
-     else # We may have already generated some elements of this D-class
-       check := false; # Check stays false until we know we have generated at least
-                       # one element in this D-class.
+     else  # We may have already generated some elements of this D-class.
+
+       check := false;  # Check stays false until we know we have generated at
+                        # least one element in this D-class.
 
        # Figure out which subsections of the D-class are generated
        # stabs are maximal subgroups in these subsections
-       # orbs are lambda values, correspond to vertex labels of MTSSemilattice
-       orbs := [];
+       # orbs are lambda values, correspond to vertex labels of MTSSemilattice.
+       orbs  := [];
        stabs := [];
        found := [];
        for u in c do
@@ -617,7 +619,7 @@ SEMIGROUPS.MTSSmallGen := function(S)
            Add(orbs, [u]);
            Add(found, u);
            Add(stabs, Group(()));
-           j := Length(orbs);
+           j    := Length(orbs);
            nbrs := List(InNeighboursOfVertex(sl, Y_X[u]), v -> X_Y[v]);
            for nbr in nbrs do
              for v in Difference(c, found) do
@@ -629,13 +631,13 @@ SEMIGROUPS.MTSSmallGen := function(S)
 
              r := RightCosets(Gcj, stabs[j]);
              i := 1;
-             while i <= Length(r) do #TODO: make this faster
+             while i <= Length(r) do  # TODO: make this faster
                if r[i] = RightCoset(stabs[j], One(Gcj)) then
                  i := i + 1;
                elif MTSAction(S)(nbr, Representative(r[i])) in X_Y then
                  stabs[j] := ClosureGroup(stabs[j], Representative(r[i]));
-                 r := RightCosets(Gcj, stabs[j]);
-                 i := 1;
+                 r        := RightCosets(Gcj, stabs[j]);
+                 i        := 1;
                else
                  i := i + 1;
                fi;
@@ -645,13 +647,13 @@ SEMIGROUPS.MTSSmallGen := function(S)
          fi;
        od;
 
-       #1 Combine intersecting orbits
+       # 1 Combine intersecting orbits.
        cat := Concatenation(orbs);
        while not IsDuplicateFreeList(cat) do
-         i := 0;
+         i   := 0;
          pos := [];
          while not Size(pos) > 1 do
-           i := i + 1;
+           i   := i + 1;
            pos := Positions(cat, cat[i]);
          od;
 
@@ -666,29 +668,29 @@ SEMIGROUPS.MTSSmallGen := function(S)
          od;
          Add(new_orbs, Set(combined));
          orbs := new_orbs;
-         cat := Concatenation(orbs);
+         cat  := Concatenation(orbs);
        od;
 
-       #2 Add generators to link orbits
+       # 2 Add generators to link orbits.
        if Size(orbs) <> 1 then
          for orb in orbs{[2 .. Length(orbs)]} do
            g := MTSE(S, orbs[1][1], RepAct(orb[1], orbs[1][1]));
            Add(gens, g);
-           Add(gens, g ^ -1); # Could add less gens here
+           Add(gens, g ^ -1);  # Could add less gens here
            check := true;
          od;
        fi;
 
-       #3 Determine (and add) missing generators of maximal subgroup
-       n := Size(Gcj);
+       # 3 Determine (and add) missing generators of maximal subgroup.
+       n     := Size(Gcj);
        sizes := List(stabs, Size);
-       Gc1 := _Stab(orbs[1][1]);
+       Gc1   := _Stab(orbs[1][1]);
        if not n in sizes then
          for i in [1 .. Size(stabs) - 1] do
            if IsSubgroup(stabs[1], stabs[i]) then
              continue;
            fi;
-           alpha := RepAct(orbs[i][1], orbs[1][1]);
+           alpha    := RepAct(orbs[i][1], orbs[1][1]);
            gs := List(GeneratorsOfGroup(stabs[i]), g -> (alpha ^ -1) * g * alpha);
            stabs[1] := ClosureGroup(stabs[1], gs);
            if stabs[1] = Gc1 then
@@ -696,7 +698,7 @@ SEMIGROUPS.MTSSmallGen := function(S)
            fi;
          od;
 
-         #3.1 If they are missing then add them
+         # 3.1 If they are missing then add them.
          for g in GeneratorsOfGroup(Gc1) do
            if not g in stabs[1] then
              Add(gens, MTSE(S, orbs[1][1], g));
@@ -716,7 +718,6 @@ SEMIGROUPS.MTSSmallGen := function(S)
    return SmallSemigroupGeneratingSet(gens);
 end;
 
-
 InstallMethod(IsomorphismSemigroup,
 "for IsMcAlisterTripleSemigroup and a semigroup",
 [IsMcAlisterTripleSemigroup, IsSemigroup],
@@ -733,49 +734,51 @@ function(filt, S)
   Es := IdempotentGeneratedSubsemigroup(S);
   if Size(Es) > 1 then
     iso_pg := IsomorphismPermGroup(S);
-    map := g -> PermList(Concatenation([1], ListPerm(g) + 1));
-    G := Group(List(SmallGeneratingSet(G)));
-    map := MappingByFunction(Range(iso_pg), G, map)));
-    xx := Digraph([[1]]);
-    M := McAlisterTripleSemigroup(G, xx, xx);
+    map    := g -> PermList(Concatenation([1], ListPerm(g) + 1));
+    G      := Group(List(SmallGeneratingSet(G)));
+    map    := MappingByFunction(Range(iso_pg), G, map);
+    xx     := Digraph([[1]]);
+    M      := McAlisterTripleSemigroup(G, xx, xx);
+
     iso := function(s)
       return MTSE(M, 1, (s ^ iso_pg) ^ map);
     end;
     return MappingByFunction(S, M, iso);
   fi;
 
-  yy := Digraph(NaturalPartialOrder(Es));
+  yy  := Digraph(NaturalPartialOrder(Es));
   ids := Elements(Es);
 
-  cong := MinimumGroupCongruence(S);
-  grp := S / cong;
-  iso_pg := IsomorphismPermGroup(grp); #This takes a long time, e.g. Sym5
-  G := Range(iso_pg);
+  cong   := MinimumGroupCongruence(S);
+  grp    := S / cong;
+  iso_pg := IsomorphismPermGroup(grp);  # This takes a long time, e.g. Sym5.
+  G      := Range(iso_pg);
   if not IsEmpty(SmallGeneratingSet(G)) then
     G := Group(SmallGeneratingSet(G));
   fi;
-  hom := QuotientSemigroupHomomorphism(grp);
+  hom   := QuotientSemigroupHomomorphism(grp);
   map_G := CompositionMapping(iso_pg, hom);
 
-  Dcl := DClasses(S);
-  n := NrDClasses(S);
+  Dcl    := DClasses(S);
+  n      := NrDClasses(S);
   cosets := [];
-  x := [];
-  xiny := [];
-  yinx := [];
+  x      := [];
+  xiny   := [];
+  yinx   := [];
   for i in [1 .. n] do
-    D := Dcl[i];
-    s := Representative(D);
-    R := RClass(D, s);
-    e := LeftOne(s);
+    D  := Dcl[i];
+    s  := Representative(D);
+    R  := RClass(D, s);
+    e  := LeftOne(s);
     Ge := Group(List(SmallGeneratingSet(Group(Elements(HClass(D, e)))), g -> g ^
           map_G));
     cosets[i] := RightCosets(G, Ge);
     Append(x, Set(cosets[i], q -> [i, q]));
     for H in HClasses(R) do
-      h := Representative(H);
+      h     := Representative(H);
       y_pos := Position(ids, RightOne(h));
       x_pos := Position(x, [i, Ge * (h ^ map_G)]);
+
       yinx[y_pos] := x_pos;
       xiny[x_pos] := y_pos;
     od;
@@ -787,11 +790,11 @@ function(filt, S)
     return Position(x, [b[1], b[2] * g]);
   end;
 
-  ah := ActionHomomorphism(G, [1 .. Size(x)], act);
+  ah   := ActionHomomorphism(G, [1 .. Size(x)], act);
   edgy := List(DigraphEdges(yy), e -> [yinx[e[1]], yinx[e[2]]]);
-  xx := EdgeOrbitsDigraph(Image(ah), edgy, Size(x));
-  xx := DigraphReflexiveTransitiveClosure(xx);
-  yy := DigraphReflexiveTransitiveClosure(yy);
+  xx   := EdgeOrbitsDigraph(Image(ah), edgy, Size(x));
+  xx   := DigraphReflexiveTransitiveClosure(xx);
+  yy   := DigraphReflexiveTransitiveClosure(yy);
   SetDigraphVertexLabels(yy, yinx);
 
   act2 := function(a, g)
@@ -863,7 +866,7 @@ function(x)
                        String(x![2]), ")");
 end);
 
-#TODO Linebreak hints
+# TODO Linebreak hints
 
 InstallMethod(ViewString, "for a McAlister triple semigroup element rep",
 [IsMcAlisterTripleSemigroupElementRep],
