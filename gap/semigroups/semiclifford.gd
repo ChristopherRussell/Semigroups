@@ -1,0 +1,2 @@
+DeclareAttribute(SemilatticeDigraphToSemilatticeSemigroup, IsDigraph);
+
