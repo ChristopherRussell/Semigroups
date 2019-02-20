@@ -51,6 +51,7 @@ ReadPackage("semigroups", "gap/semigroups/grpffmat.gi");
 ReadPackage("semigroups", "gap/semigroups/semiquo.gi");
 ReadPackage("semigroups", "gap/semigroups/semieunit.gi");
 ReadPackage("semigroups", "gap/semigroups/semidp.gi");
+ReadPackage("semigroups", "gap/semigroups/equivlatt.gi");
 
 ReadPackage("semigroups", "gap/ideals/ideals.gi");
 ReadPackage("semigroups", "gap/ideals/idealact.gi");
