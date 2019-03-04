@@ -1,186 +1,203 @@
 # Semigroups
-InstallMethod(EquivalenceLatticeDegree, "for a equivalence lattice",
-[IsEquivalenceLattice],
+InstallMethod(UFSemigroupDegree, "for a uf semigroup",
+[IsUFSemigroup],
 function(S)
-  return EquivalenceLatticeElementDegree(S.1);
+  return UF_SIZE(S.1!.uf);
 end);
 
-InstallMethod(OneImmutable, "for a equivalence lattice",
-[IsEquivalenceLattice],
+InstallMethod(OneImmutable, "for a uf semigroup",
+[IsUFSemigroup],
 function(S)
-  return EquivalenceLatticeElement(
-    List([1 .. EquivalenceLatticeDegree(S)], i -> [i]));
+  return Objectify(UFElementType, rec(uf := UF_NEW(UFSemigroupDegree(S))));
 end);
 
-InstallMethod(String, "for a equivalence lattice",
-[IsEquivalenceLattice],
+InstallMethod(String, "for a uf semigroup",
+[IsUFSemigroup],
 function(S)
   return Concatenation("Semigroup(", String(GeneratorsOfSemigroup(S)));
 end);
 
-InstallMethod(PrintObj, "for a equivalence lattice",
-[IsEquivalenceLattice],
+InstallMethod(PrintObj, "for a uf semigroup",
+[IsUFSemigroup],
 function(S)
   Print(String(S));
   return;
 end);
 
-InstallMethod(ViewString, "for a equivalence lattice",
-[IsEquivalenceLattice],
+InstallMethod(ViewString, "for a uf semigroup",
+[IsUFSemigroup],
 function(S)
-  return Concatenation("<equivalence lattice of degree ",
-                       String(EquivalenceLatticeDegree(S)), ">");
+  return Concatenation("<uf semigroup of degree ",
+                       String(UFSemigroupDegree(S)), ">");
 end);
 
 # Elements
 
-InstallMethod(EquivalenceLatticeElement,
+InstallMethod(UFFromBlocksNC,
 "for a list",
 [IsList],
-function(p)
-  if not ForAll(p, IsInt) then
+function(b)
+  local n, u, block, x;
+  n := Sum(b, Length);
+  u := UF_NEW(n);
+  for block in b do
+    for x in block{[2 .. Length(block)]} do
+      UF_UNION(u, [block[1], x]);
+    od;
+  od;
+  return Objectify(UFElementType, rec(uf := u, blocks := b));
+end);
+
+InstallMethod(UFFromBlocks,
+"for a list",
+[IsList],
+function(b)
+  if not ForAll(b, block -> IsList(block) and ForAll(block, IsInt)) then
     ErrorNoReturn("Semigroups: EquivalenceLatticeElement: usage,\n",
                   "the argument should be a list of ints,");
   fi;
-  return Objectify(EquivalenceLatticeElementType, p);
+  return UFFromBlocksNC(b);
 end);
 
-InstallMethod(EquivalenceLatticeElementNC,
+InstallMethod(UFFromTableNC,
 "for a list",
 [IsList],
-function(p)
-  return Objectify(EquivalenceLatticeElementType, p);
-end);
-
-InstallMethod(EquivalenceLatticeElement,
-"for a digraph",
-[IsDigraph],
-function(digraph)
-  # if not IsReflexiveDigraph(digraph) and IsTransitiveDigraph(digraph) and
-  #   IsSymmetricDigraph(digraph) then
-  #   ErrorNoReturn("Semigroups: EquivalenceLatticeElement: usage,\n",
-  #                 "the argument should be a reflexive, transitive and ",
-  #                 "symmetric digraph,");
-  # fi;
-  return Objectify(EquivalenceLatticeElementType, rec(digraph := digraph));
-end);
-
-InstallMethod(EquivalenceLatticeElementDigraph,
-"for a equivalence lattice element",
-[IsEquivalenceLatticeElement],
-function(x)
-  local edges, part, i;
-  if IsBound(x!.digraph) then
-    return x!.digraph;
-  fi;
-  edges := [];
-  for part in EquivalenceLatticeElementPartition(x) do
-    for i in [1 .. Length(part) - 1] do
-        AddSet(edges, [part[i], part[i + 1]]);
-    od;
-    AddSet(edges, [part[Length(part)], part[1]]);
+function(t)
+  local n, u, x;
+  n := Length(t);
+  u := UF_NEW(n);
+  for x in [1 .. n] do
+    UF_UNION(u, [x, t[x]]);
   od;
-  x!.digraph := DigraphByEdges(edges);
-  return x!.digraph;
+  return Objectify(UFElementType, rec(uf := u, table := t));
 end);
 
-InstallMethod(EquivalenceLatticeElementPartition,
-"for a equivalence lattice element",
-[IsEquivalenceLatticeElement],
-function(x)
-  if IsBound(x) then
-    return x;
+InstallMethod(UFFromTable,
+"for a list",
+[IsList],
+function(t)
+  if not ForAll(t, IsInt) then
+    ErrorNoReturn("Semigroups: EquivalenceLatticeElement: usage,\n",
+                  "the argument should be a list of ints,");
   fi;
-  x!.partition := DigraphStronglyConnectedComponents(
-    EquivalenceLatticeElementDigraph(x))!.comps;
-  return x!.partition;
+  return UFFromTableNC(t);
 end);
 
-InstallMethod(EquivalenceLatticeElementDegree,
-"for a equivalence lattice element",
-[IsEquivalenceLatticeElement],
-function(x)
-  if IsBound(x!.partition) then
-    return Size(Union(EquivalenceLatticeElementPartition(x)));
-  else
-    return DigraphNrVertices(EquivalenceLatticeElementDigraph(x));
+InstallMethod(UFSize,
+"for a list",
+[IsUFElement],
+function(uf)
+  return UF_SIZE(uf!.uf);
+end);
+
+InstallMethod(UFTable,
+"for a list",
+[IsUFElement],
+function(uf)
+  if IsBound(uf!.table) then
+    return uf!.table;
   fi;
+  return UF_TABLE(uf!.uf);
 end);
 
-InstallMethod(String, "for a equivalence lattice element rep",
-[IsEquivalenceLatticeElement],
-function(x)
-  return String(EquivalenceLatticeElementPartition(x));
+InstallMethod(UFBlocks,
+"for a list",
+[IsUFElement],
+function(uf)
+  return UF_BLOCKS(uf!.uf);
 end);
 
-InstallMethod(ViewString, "for a equivalence lattice element rep",
-[IsEquivalenceLatticeElement],
-function(x)
-  return ViewString(EquivalenceLatticeElementPartition(x));
+InstallMethod(UFNrBlocks,
+"for a list",
+[IsUFElement],
+function(uf)
+  return UF_NR_BLOCKS(uf!.uf);
 end);
 
-InstallMethod(\=, "for two equivalence lattice element reps",
+InstallMethod(String, "for a uf object",
+[IsUFElement],
+function(uf)
+  return String(UFBlocks(uf));
+end);
+
+InstallMethod(ViewString, "for a uf object",
+[IsUFElement],
+function(uf)
+  return ViewString(UFBlocks(uf));
+end);
+
+InstallMethod(\=, "for two uf objects",
 IsIdenticalObj,
-[IsEquivalenceLatticeElement, IsEquivalenceLatticeElement],
-function(x, y)
-  return EquivalenceLatticeElementPartition(x)
-         = EquivalenceLatticeElementPartition(y);
-end);
-
-InstallMethod(\*, "for two equivalence lattice element reps",
-[IsEquivalenceLatticeElement, IsEquivalenceLatticeElement],
-function(x, y)
-  local Ex, Ey, di, xy;
-  if not EquivalenceLatticeElementDegree(x) =
-         EquivalenceLatticeElementDegree(y) then
-    ErrorNoReturn("Semigroups: \*, usage:",
-                  "the two elements must have the same degree,");
+[IsUFElement, IsUFElement],
+function(uf1, uf2)
+  if not UFSize(uf1) = UFSize(uf2) then
+    ErrorNoReturn("Semigroups: \=, usage:",
+                  "the two uf elements must have the same size,");
   fi;
-  Ex := DigraphEdges(EquivalenceLatticeElementDigraph(x));
-  Ey := DigraphEdges(EquivalenceLatticeElementDigraph(y));
- # di := DigraphReflexiveTransitiveClosure(DigraphByEdges(Union(Ex, Ey)));
- # return EquivalenceLatticeElement(DigraphStronglyConnectedComponents(di)!.comps);
-  
-  di := DigraphByEdges(Union(Ex, Ey));
-  xy := EquivalenceLatticeElementNC(
-    DigraphStronglyConnectedComponents(di).comps);
-  SetEquivalenceLatticeElementDegree(xy, EquivalenceLatticeElementDegree(x));
-  return xy;
+  return ForAll([1 .. UFSize(uf1)],
+                i -> UF_FIND(uf1!.uf, i) = UF_FIND(uf2!.uf, i));
 end);
 
-InstallMethod(\<, "for two equivalence lattice element reps",
-[IsEquivalenceLatticeElement, IsEquivalenceLatticeElement],
-function(x, y)
-  if not EquivalenceLatticeElementDegree(x) =
-         EquivalenceLatticeElementDegree(y) then
+InstallMethod(\*, "for two uf objects",
+[IsUFElement, IsUFElement],
+function(uf1, uf2)
+  if not UFSize(uf1) = UFSize(uf2) then
     ErrorNoReturn("Semigroups: \*, usage:",
-                  "the two elements must have the same degree,");
+                  "the two uf elements must have the same size,");
   fi;
-  return ForAll(EquivalenceLatticeElementPartition(y),
-                p -> ForAny(EquivalenceLatticeElementPartition(x),
-                            q -> IsSubset(q, p)));
+  return Objectify(UFElementType, rec(uf := UF_JOIN(uf1!.uf, uf2!.uf)));
 end);
 
-InstallMethod(InverseOp, "for a equivalence lattice element rep",
-[IsEquivalenceLatticeElement],
-function(x)
-  return x;
+InstallMethod(\<, "for two uf objects",
+[IsUFElement, IsUFElement],
+function(uf1, uf2)
+  local i;
+  if not UFSize(uf1) = UFSize(uf2) then
+    ErrorNoReturn("Semigroups: \<, usage:",
+                  "the two uf elements must have the same size,");
+  fi;
+  for i in [1 .. UFSize(uf1)] do
+    if UF_FIND(uf1!.uf, i) < UF_FIND(uf2!.uf, i) then
+      return true;
+    elif UF_FIND(uf1!.uf, i) > UF_FIND(uf2!.uf, i) then
+      return false;
+    fi;
+  od;
+  return false;
 end);
 
-InstallMethod(\^, "for a equivalence lattice element and a negative int",
-              [IsEquivalenceLatticeElement, IsNegInt],
-function(x, i)
-  return x;
+InstallMethod(InverseOp, "for a uf object",
+[IsUFElement],
+function(uf)
+  return uf;
 end);
 
-InstallMethod(LeftOne, "for a equivalence lattice element rep",
-[IsEquivalenceLatticeElement],
-function(x)
-  return x;
+InstallMethod(\^, "for a uf object and a negative int",
+[IsUFElement, IsNegInt],
+function(uf, i)
+  return uf;
 end);
 
-InstallMethod(RightOne, "for a equivalence lattice element rep",
-[IsEquivalenceLatticeElement],
-function(x)
-  return x;
+InstallMethod(LeftOne, "for a uf object",
+[IsUFElement],
+function(uf)
+  return uf;
+end);
+
+InstallMethod(RightOne, "for a uf object",
+[IsUFElement],
+function(uf)
+  return uf;
+end);
+
+InstallMethod(RightOne, "for a uf object",
+[IsUFElement],
+function(uf)
+  return uf;
+end);
+
+InstallMethod(IsGreensDGreaterThanFunc, "for a uf semigroup",
+[IsUFSemigroup],
+function(S)
+  return {x, y} -> x * y = y;
 end);

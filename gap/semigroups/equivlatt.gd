@@ -8,48 +8,50 @@
 #############################################################################
 ##
 
-# Equivalence lattice elements
-DeclareCategory("IsEquivalenceLatticeElement",
+# Semigroups of uf elements
+DeclareCategory("IsUFElement",
                 IsAssociativeElement and IsMultiplicativeElementWithInverse and
-                IsCommutativeElement and IsIdempotent and IsAttributeStoringRep
-                and IsPositionalObjectRep);
+                IsCommutativeElement and IsIdempotent and IsComponentObjectRep);
 
-BindGlobal("EquivalenceLatticeElementFamily",
-           NewFamily("EquivalenceLatticeElementFamily",
-           IsEquivalenceLatticeElement));
+BindGlobal("UFElementFamily",
+           NewFamily("UFElementFamily",
+           IsUFElement));
 
-BindGlobal("EquivalenceLatticeElementType",
-           NewType(EquivalenceLatticeElementFamily,
-           IsEquivalenceLatticeElement and IsPositionalObjectRep));
+BindGlobal("UFElementType",
+           NewType(UFElementFamily, IsUFElement and IsComponentObjectRep));
 
-# Operations for creating equivalence lattice elements
-DeclareOperation("EquivalenceLatticeElementNC",
+# Operations for elements
+DeclareOperation("UFFromBlocksNC",
                  [IsList]);
-DeclareOperation("EquivalenceLatticeElement",
+DeclareOperation("UFFromTableNC",
                  [IsList]);
-DeclareOperation("EquivalenceLatticeElement",
-                 [IsDigraph]);
+DeclareOperation("UFFromBlocks",
+                 [IsList]);
+DeclareOperation("UFFromTable",
+                 [IsList]);
 
-# Attributes for equivalence lattice elements
-DeclareAttribute("EquivalenceLatticeElementDigraph",
-                 IsEquivalenceLatticeElement);
-DeclareAttribute("EquivalenceLatticeElementPartition",
-                 IsEquivalenceLatticeElement);
-DeclareAttribute("EquivalenceLatticeElementDegree",
-                 IsEquivalenceLatticeElement);
+# Attributes for elements
+DeclareAttribute("UFSize",
+                 IsUFElement);
+DeclareAttribute("UFTable",
+                 IsUFElement);
+DeclareAttribute("UFBlocks",
+                 IsUFElement);
+DeclareAttribute("UFNrBlocks",
+                 IsUFElement);
 
-# Equivalence lattice semigroups
-DeclareCategoryCollections("IsEquivalenceLatticeElement");
-DeclareSynonymAttr("IsEquivalenceLattice",
-                   IsSemigroup and IsEquivalenceLatticeElementCollection);
+# uf semigroups
+DeclareCategoryCollections("IsUFElement");
+DeclareSynonymAttr("IsUFSemigroup",
+                   IsSemigroup and IsUFElementCollection);
 
-InstallTrueMethod(IsGeneratorsOfEnumerableSemigroup,
-                  IsEquivalenceLatticeElementCollection);
+#InstallTrueMethod(IsGeneratorsOfEnumerableSemigroup,
+#                  IsUFElementCollection);
 InstallTrueMethod(IsFinite,
-                  IsEquivalenceLattice);
+                  IsUFSemigroup);
 InstallTrueMethod(IsSemilatticeAsSemigroup,
-                  IsEquivalenceLattice);
+                  IsUFSemigroup);
 
-# Attributes for equivalence lattice semigroups
-DeclareAttribute("EquivalenceLatticeDegree",
-                 IsEquivalenceLattice);
+# Attributes for uf semigroups
+DeclareAttribute("UFSemigroupDegree",
+                 IsUFSemigroup);
